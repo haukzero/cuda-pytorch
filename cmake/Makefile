@@ -1,7 +1,8 @@
 all: run test
+CMAKE_PREFIX_PATH := $(shell python -c 'from torch.utils import cmake_prefix_path as _cpp; print(_cpp)')
 
 run:
-	cmake -H. -Bbuild -DCMAKE_PREFIX_PATH="$(python -c 'from torch.utils import cmake_prefix_path as _cpp; print(_cpp)')"
+	cmake -H. -Bbuild -DCMAKE_PREFIX_PATH="$(CMAKE_PREFIX_PATH)"
 	cmake --build ./build
 
 test:
