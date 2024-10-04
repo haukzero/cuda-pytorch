@@ -1,0 +1,9 @@
+.vscode
+
+.idea
+
+./*/build/
+
+./setup/add2.egg-info/
+
+./setup/dist/
