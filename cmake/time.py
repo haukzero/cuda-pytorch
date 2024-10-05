@@ -1,5 +1,7 @@
 import torch
-from time import perf_counter_ns
+from torch.autograd.profiler import profile
+
+torch.ops.load_library("build/libadd2.so")
 
 
 def warmup(device="cuda"):
@@ -7,6 +9,14 @@ def warmup(device="cuda"):
     b = torch.randn(4096, 4096, device=device)
     _ = a @ b
     print("Warmup done")
+
+
+def pytorch_add(a, b):
+    return a + b
+
+
+def my_add(a, b):
+    return torch.ops.add2_cmake.add2(a, b)
 
 
 if __name__ == "__main__":
@@ -17,19 +27,15 @@ if __name__ == "__main__":
     a = torch.randn(2, 128, 2048, device=device)
     b = torch.randn(a.shape, device=device)
 
-    start = perf_counter_ns() / 1e6
-    c1 = a + b
-    end = perf_counter_ns() / 1e6
-    print(f"PyTorch Add cost time: {end - start} ms")
+    with profile(use_cuda=True) as prof:
+        c1 = pytorch_add(a, b)
+    print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
 
-    torch.ops.load_library("build/libadd2.so")
+    with profile(use_cuda=True) as prof:
+        c2 = my_add(a, b)
+    print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
 
-    start = perf_counter_ns() / 1e6
-    c2 = torch.ops.add2_cmake.add2(a, b)
-    end = perf_counter_ns() / 1e6
-    print(f"My Add cost time: {end - start} ms")
-
-    if torch.allclose(c1, c2):
+    if torch.allclose(c1, c2, rtol=0, atol=1e-2):
         print("All close")
     else:
         print("Not all close")

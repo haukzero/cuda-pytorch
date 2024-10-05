@@ -1,9 +1,9 @@
 all: run
 
 run:
-	python time.py
+	python time.py > test_time.log
 	@echo "========================================"
 	python model.py
 
 clean:
-	rm -rf loss.png
+	rm -rf test_time.log loss.png
